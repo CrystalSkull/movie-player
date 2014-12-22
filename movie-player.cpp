@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <sys/types.h>
@@ -6,7 +7,19 @@
 #include "movie-player.h"
 
 int main(int argc, char *argv[]) {
-	std::cout << findMovie(argv[1]) << std::endl;
+	//no arguments, lets assume we just want to play the latest movie with the default path
+	if(argc == 1) {
+		std::string path = findMovie(findLatestDirectory(DEFAULT_PATH));
+		int retVal = startMovie(path);
+		if(retVal)
+			reportError();
+	}
+	else if(argc >= 2) {
+		std::string path = findMovie(findLatestDirectory(getFlag("--path", argc, argv)));	
+		int retVal = startMovie(path);
+		if(retVal)
+			reportError();
+	}
 	return 0;
 }
 
@@ -77,4 +90,23 @@ std::string findMovie(std::string dirPath) {
 	}
 	closedir(dir);
 	return moviePath;
+}
+
+int startMovie(std::string path) {
+	std::string fullCommand(COMMAND_TEXT);
+	fullCommand.append(" \"" + path + "\"");
+	std::cout << "Trying to start movie: " << path << std::endl;
+	return system(fullCommand.c_str());
+}
+
+void reportError() {
+	std::cout << "Could not play this file" << std::endl;
+}
+
+std::string getFlag(std::string flag, int argc, char *argv[]) {
+	for(int i = 1; i < argc; i++) {
+		if(flag.compare(argv[i]) == 0 && i+1 < argc)
+			return std::string(argv[i+1]);
+	}
+	return std::string();
 }
